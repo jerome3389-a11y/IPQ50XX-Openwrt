@@ -147,21 +147,26 @@ p:last-child { margin-bottom: 0; }
 }
 
 /* ---------- 翻页台（整页翻页，绝不停在半页） ---------- */
-/* 台高 = 1 屏台面 + 每页 0.6 屏行程 × 2 页 = 2.2 屏；台面整屏粘住，
-   三页绝对叠放在同一屏里。行程压到 0.6 屏是要让手指少滑：拖过约
-   三分之一行程松手，吸附就会把这一页翻完。每页的透明度由 site.js
-   按滚动进度逐帧写：背景不同的相邻页在这 0.6 屏行程内淡入淡出交叠，
-   到整页位置时上一页恰好完全淡出、这一页完全显形；滚动一停，JS 再
-   把位置吸附到最近的整页边界。所以任何静止时刻，屏幕上永远只有
-   完整的一页。台高必须和 site.js 的 TRAVEL_RATIO 对上：1 + 2×0.6。 */
+/* 台高 = 1 屏台面 + 每页 0.6 屏行程 × 2 页 + 1 屏盖口 = 3.2 屏；台面
+   整屏粘住，三页绝对叠放在同一屏里。行程压到 0.6 屏是要让手指少滑：
+   拖过约三分之一行程松手，吸附就会把这一页翻完。每页的透明度由
+   site.js 按滚动进度逐帧写：背景不同的相邻页在这 0.6 屏行程内淡入
+   淡出交叠，到整页位置时上一页恰好完全淡出、这一页完全显形；滚动
+   一停，JS 再把位置吸附到最近的整页边界。所以任何静止时刻，屏幕上
+   永远只有完整的一页。台高必须和 site.js 的 TRAVEL_RATIO 对上：
+   1 + 2×0.6 + 1 盖口。多出的一屏盖口是给 03 的：.smooth 整个上提一屏，
+   03 在 HE160 还粘住时就从屏底升起来盖住它，翻页台到平滑段的过渡
+   不再是两段各滑各的。台面 z-index: 0 让它自成层叠上下文，翻页圆点
+   才不会浮在盖上来的平滑段上面。 */
 .deck {
   position: relative;
-  height: 220vh;
-  height: 220svh;
+  height: 320vh;
+  height: 320svh;
 }
 .deck-stage {
   position: sticky;
   top: 0;
+  z-index: 0;
   height: 100vh;
   height: 100svh;
   overflow: hidden;
@@ -207,12 +212,41 @@ p:last-child { margin-bottom: 0; }
 }
 .deck-dot.is-active { background: var(--text); transform: scale(1.3); }
 
-/* 平滑段：普通流，紧接翻页台；与 HE160 的交界同样被吸附管着，
-   静止时不会半页 HE160、半页平滑段 */
+/* 平滑段：紧接翻页台；整个上提一屏（margin-top: -100svh），让 03
+   在 HE160 还粘住时就从屏底升起来盖住它，过渡不再是两段各滑各的。
+   与 HE160 的交界同样被吸附管着，静止时不会半页 HE160、半页平滑段 */
 .smooth {
   position: relative;
   z-index: 4;
+  margin-top: -100vh;
+  margin-top: -100svh;
   background: var(--bg);
+}
+
+/* ---------- 盖屏：三页之后，每节从下面升起来盖住上一节 ---------- */
+/* 每节占满一屏、粘住不动，下一节从下面升起来盖住它（圆角顶、亮顶边、
+   重投影，像一张独立的纸盖上来）。03 先盖翻页台，04 盖 03，05 盖 04。
+   FAQ 是最后一节，不粘——盖住 05 后恢复普通滚动，内容再长也看得完。
+   各节 z-index 递增，后盖的画在上面；背景各不相同，盖上去才看得出
+   是另一页。 */
+.smooth section.cover {
+  min-height: 100vh;
+  min-height: 100svh;
+  border-radius: 28px 28px 0 0;
+  border-top: 1px solid rgba(255, 255, 255, .16);
+  box-shadow: 0 -24px 60px rgba(0, 0, 0, .55);
+}
+.smooth section.chapter.cover {
+  position: sticky;
+  top: 0;
+}
+#patches.cover { z-index: 1; background-color: #0a0a18; }
+#build.cover { z-index: 2; background-color: #0a1210; }
+#install.cover { z-index: 3; background-color: #0a0a18; }
+.smooth section.faq.cover {
+  position: relative;
+  z-index: 4;
+  background-color: var(--bg);
 }
 
 /* ---------- Hero ---------- */
@@ -591,6 +625,18 @@ p:last-child { margin-bottom: 0; }
   .nav-brand { margin-right: auto; }
   .cards { grid-template-columns: 1fr; }
   .chapter .glass { padding: 26px; }
+  /* 窄屏：卡片上下叠放，一节装不下一屏，盖屏粘住会把下半截内容
+     提前盖掉——退回普通滚动，翻页台也回到 2.2 屏（盖口不要了）。 */
+  .deck { height: 220vh; height: 220svh; }
+  .smooth { margin-top: 0; }
+  .smooth section.chapter.cover,
+  .smooth section.faq.cover {
+    position: relative;
+    min-height: 0;
+    border-radius: 0;
+    border-top: 0;
+    box-shadow: none;
+  }
 }
 
 /* 矮屏：翻页页内容压紧，保证整页装得下、不被裁 */
