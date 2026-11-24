@@ -5,16 +5,20 @@
  *   1. Lenis smooth scrolling (optional, graceful fallback)
  *   2. Full-page deck (hero / 01 / 02): the three pages are stacked in
  *      one sticky viewport. Turning a page takes only TRAVEL_RATIO of
- *      a screen of scrolling (0.6), so a short swipe flips a page; the
- *      snap is also biased in the direction of travel, so letting go
- *      after roughly a third of that short travel already completes
- *      the turn. Scroll progress drives a crossfade between
- *      neighbouring pages — but ONLY when their backgrounds differ
- *      (data-bg); pages sharing a background switch outright with no
- *      fade. When scrolling stops anywhere in the deck zone (including
- *      the exit into the smooth section), the position snaps to the
- *      nearest whole-page boundary, so a page can never come to rest
- *      half-turned.
+ *      a screen of scrolling (0.6), so a short swipe flips a page.
+ *      A mouse wheel notch is only ~100px, far less than one turn, so
+ *      the wheel is claimed inside the deck (data-lenis-prevent-wheel
+ *      keeps Lenis out): one notch = exactly one whole-page turn, and
+ *      notches during a turn are swallowed, so a page can never stick
+ *      half-turned and roll back. Touch keeps the idle snap instead:
+ *      letting go after roughly a third of a segment completes the
+ *      turn in that direction. Scroll progress drives a crossfade
+ *      between neighbouring pages — but ONLY when their backgrounds
+ *      differ (data-bg); pages sharing a background switch outright
+ *      with no fade. When scrolling stops anywhere in the deck zone
+ *      (including the exit into the smooth section), the position
+ *      snaps to the nearest whole-page boundary, so a page can never
+ *      come to rest half-turned.
  *   3. Scroll-following motion (FlowOS style, no staged entrances):
  *      the rAF loop writes a continuous --rv progress (0..1) onto every
  *      .reveal element from its live viewport position, and CSS turns
@@ -64,8 +68,9 @@
   try {
     if (typeof window.Lenis === 'function') {
       lenis = new window.Lenis({
-        // Gentle, FlowOS-like feel; keep defaults otherwise.
-        lerp: 0.1,
+        // Snappy enough that the page follows the wheel without
+        // lagging a full second behind it (0.1 was visibly tardy).
+        lerp: 0.15,
         smoothWheel: true
       });
     }
@@ -124,12 +129,13 @@
   var snapping = false;
   var snapTimer = null;
 
-  function scrollToY(target, duration) {
+  function scrollToY(target, duration, onComplete) {
     if (lenis) {
       try {
         lenis.scrollTo(target, {
           duration: duration,
-          easing: function (t) { return 1 - Math.pow(1 - t, 3); }
+          easing: function (t) { return 1 - Math.pow(1 - t, 3); },
+          onComplete: onComplete
         });
         return;
       } catch (err) {
@@ -144,13 +150,23 @@
     } catch (err) {
       window.scrollTo(0, target);
     }
+    if (onComplete) {
+      window.setTimeout(onComplete, duration * 1000 + 120);
+    }
   }
 
-  function snapToPage(target, duration) {
+  function snapToPage(target, duration, onComplete) {
     snapping = true;
-    scrollToY(target, duration);
-    if (snapTimer) window.clearTimeout(snapTimer);
-    snapTimer = window.setTimeout(function () { snapping = false; }, duration * 1000 + 120);
+    var done = false;
+    var finish = function () {
+      if (done) return;
+      done = true;
+      if (snapTimer) window.clearTimeout(snapTimer);
+      snapping = false;
+      if (onComplete) onComplete();
+    };
+    scrollToY(target, duration, finish);
+    snapTimer = window.setTimeout(finish, duration * 1000 + 400);
   }
 
   /* When scrolling settles inside the deck zone, complete the page
@@ -186,7 +202,7 @@
       }
     }
     if (Math.abs(y - target) <= 2) return;
-    snapToPage(target, reducedMotion ? 0.01 : 0.55);
+    snapToPage(target, reducedMotion ? 0.01 : 0.45);
   }
 
   try {
@@ -203,6 +219,102 @@
     }, { passive: true });
   } catch (err) {
     // Without snap the deck still crossfades; nothing else breaks.
+  }
+
+  /* ---------------------------------------------------------------- */
+  /* Wheel: one notch = one whole page inside the deck.                 */
+  /*                                                                    */
+  /* Why this exists: a mouse wheel notch moves only ~100px while one   */
+  /* page turn is 0.6 screens, so a notch started the crossfade and    */
+  /* then the 150ms idle snap fired mid-turn and yanked the page back  */
+  /* (frac < 0.35 -> previous page) — the stuck-halfway rollback.      */
+  /* Lenis's glide made it worse: lerp 0.1 kept the page drifting a    */
+  /* full second after the wheel stopped, while the snap tried to       */
+  /* steer it somewhere else.                                           */
+  /*                                                                    */
+  /* The deck carries data-lenis-prevent-wheel, so Lenis never sees     */
+  /* wheel input over it (its own escape hatch, checked against the     */
+  /* 1.1.14 source). This handler claims the wheel inside the deck     */
+  /* zone instead: deltas accumulate until one notch-worth (40px, a    */
+  /* notch is ~100, Firefox line mode 3x16=48) and then exactly one    */
+  /* turn runs to the next whole-page boundary. Further notches are     */
+  /* swallowed until the turn lands, so they can never queue up or     */
+  /* reverse it mid-flight. At the deck edges (first page going up,    */
+  /* past the smooth-section top going down) the wheel is left alone   */
+  /* and normal scrolling takes over. Touch keeps the idle snap above:  */
+  /* touch deltas stream continuously, so the 0.35 bias works there.    */
+  /* ---------------------------------------------------------------- */
+  var wheelAccum = 0;
+  var wheelLocked = false;
+  var wheelLockTimer = null;
+  var WHEEL_THRESHOLD = 40;
+
+  function deckPoints() {
+    var points = [];
+    for (var i = 0; i < deckPages.length; i++) points.push(pageOffset(i));
+    points.push(deckTop() + (deckEl.offsetHeight || 0));
+    return points;
+  }
+
+  /* Next whole-page boundary in direction `dir` (1 down, -1 up),
+   * or null when the wheel should pass through to normal scrolling. */
+  function wheelTarget(dir) {
+    if (!deckEl || !deckPages.length) return null;
+    var y = window.scrollY || window.pageYOffset || 0;
+    var top = deckTop();
+    var zoneEnd = top + (deckEl.offsetHeight || 0);
+    if (y < top - 2 || y > zoneEnd - 2) return null;
+    var points = deckPoints();
+    var current = 0;
+    for (var s = 0; s < points.length; s++) {
+      if (y >= points[s] - 2) current = s;
+    }
+    var next = current + dir;
+    if (next < 0 || next > points.length - 1) return null;
+    if (Math.abs(points[next] - y) <= 2) return null;
+    return points[next];
+  }
+
+  function inDeckZone() {
+    if (!deckEl || !deckPages.length) return false;
+    var y = window.scrollY || window.pageYOffset || 0;
+    var top = deckTop();
+    var zoneEnd = top + (deckEl.offsetHeight || 0);
+    return y >= top - 2 && y <= zoneEnd - 2;
+  }
+
+  try {
+    window.addEventListener('wheel', function (e) {
+      var dy = e.deltaY || 0;
+      if (e.deltaMode === 1) dy *= 16;
+      else if (e.deltaMode === 2) dy *= pageHeight();
+      if (!dy || Math.abs(e.deltaX || 0) > Math.abs(dy)) return;
+      var dir = dy > 0 ? 1 : -1;
+      if (wheelLocked) {
+        // A turn is running: swallow notches over the deck so they
+        // never queue into the next turn or into Lenis afterwards.
+        if (inDeckZone()) {
+          try { e.preventDefault(); } catch (err) {}
+        }
+        return;
+      }
+      var target = wheelTarget(dir);
+      if (target === null) { wheelAccum = 0; return; }
+      try { e.preventDefault(); } catch (err) {}
+      wheelAccum += dy;
+      if (Math.abs(wheelAccum) < WHEEL_THRESHOLD) return;
+      wheelAccum = 0;
+      wheelLocked = true;
+      var duration = reducedMotion ? 0.01 : 0.45;
+      if (wheelLockTimer) window.clearTimeout(wheelLockTimer);
+      wheelLockTimer = window.setTimeout(function () { wheelLocked = false; }, duration * 1000 + 500);
+      snapToPage(target, duration, function () {
+        if (wheelLockTimer) window.clearTimeout(wheelLockTimer);
+        wheelLocked = false;
+      });
+    }, { passive: false });
+  } catch (err) {
+    // Without the wheel handler the idle snap still settles pages.
   }
 
   /* Deck dots: jump straight to a whole page. */
