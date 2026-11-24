@@ -108,12 +108,13 @@
   </div><!-- /.deck-stage -->
   </div><!-- /.deck -->
 
-  <!-- 平滑段：03 起恢复普通滚动；离开翻页台同样吸附，
-       要么 HE160 整页、要么平滑段整段从页首开始，不停在半页 -->
+  <!-- 盖屏段：03 起每节占满一屏、粘住不动，下一节从下面升起来
+       盖住上一节（圆角顶、亮顶边、重投影，像一张独立的纸盖上来）；
+       离开翻页台同样吸附，停下总落在整页边界 -->
   <div class="smooth" id="smooth">
 
   <!-- 03 ath11k 补丁 -->
-  <section class="chapter" id="patches" data-progress>
+  <section class="chapter cover" id="patches" data-progress>
     <div class="chapter-inner">
       <p class="chapter-num reveal">03</p>
       <h2 class="reveal" data-words>两个 ath11k 补丁</h2>
@@ -134,7 +135,7 @@
   </section>
 
   <!-- 04 构建与 Release -->
-  <section class="chapter" id="build" data-progress>
+  <section class="chapter cover" id="build" data-progress>
     <div class="chapter-inner">
       <p class="chapter-num reveal">04</p>
       <h2 class="reveal" data-words>构建与 Release</h2>
@@ -148,7 +149,7 @@
   </section>
 
   <!-- 05 安装 -->
-  <section class="chapter" id="install" data-progress>
+  <section class="chapter cover" id="install" data-progress>
     <div class="chapter-inner">
       <p class="chapter-num reveal">05</p>
       <h2 class="reveal" data-words>安装</h2>
@@ -157,7 +158,7 @@
   </section>
 
   <!-- FAQ -->
-  <section class="faq" id="faq" data-progress>
+  <section class="faq cover" id="faq" data-progress>
     <div class="faq-inner">
       <p class="chapter-num reveal">FAQ</p>
       <h2 class="reveal" data-words>常见问题</h2>
