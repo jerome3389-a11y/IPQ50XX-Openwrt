@@ -430,3 +430,37 @@
 
   window.addEventListener('resize', updateScrollVars, { passive: true });
 })();
+
+/* ------------------------------------------------------------------ */
+/* Per-device latest release. GitHub has no per-board /releases/latest,
+   so a [data-board] click looks up the newest release whose tag starts
+   with that board (M79A- / M81-) via the public releases API and jumps
+   straight to it. No JS, or the lookup fails/times out: the link's own
+   href (the releases list) still works, and modified clicks (new tab)
+   are left alone.                                                  */
+/* ------------------------------------------------------------------ */
+(function () {
+  var API = 'https://api.github.com/repos/jerome3389-a11y/cr880x-ipq5000-nss/releases?per_page=10';
+  var LIST = 'https://github.com/jerome3389-a11y/cr880x-ipq5000-nss/releases';
+  function withTimeout(promise, ms) {
+    return Promise.race([promise, new Promise(function (_, reject) {
+      setTimeout(function () { reject(new Error('timeout')); }, ms);
+    })]);
+  }
+  document.addEventListener('click', function (e) {
+    if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
+    var el = e.target && e.target.closest ? e.target.closest('[data-board]') : null;
+    if (!el || typeof fetch !== 'function') return;
+    e.preventDefault();
+    var board = el.getAttribute('data-board');
+    withTimeout(fetch(API).then(function (res) { return res.json(); }), 5000)
+      .then(function (rels) {
+        var rel = null;
+        for (var i = 0; i < rels.length; i++) {
+          if (rels[i].tag_name && rels[i].tag_name.indexOf(board + '-') === 0) { rel = rels[i]; break; }
+        }
+        window.location.href = rel ? rel.html_url : LIST;
+      })
+      .catch(function () { window.location.href = LIST; });
+  });
+})();
