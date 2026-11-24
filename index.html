@@ -5,33 +5,211 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>CR880x — NSS 硬件加速的 OpenWrt</title>
 <meta name="description" content="CR880x：NSS 硬件加速的 OpenWrt，为 M79A / M81 而生。">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="assets/site.css">
-<link rel="stylesheet" href="assets/images.css">
 <style>
-  /* 兜底：远程图片加载失败时，极光渐变垫在图片下层，
-     保证 hero 大字与章节背景始终可见（图片正常时完全被其覆盖）。 */
-  .hero-bg { background-image: var(--img-hero, var(--aurora-hero)), var(--aurora-hero); }
-  .hero-title { background-image: var(--img-hero, var(--aurora-hero)), var(--aurora-hero); }
-  .chapter-bg-1 { background-image: var(--img-aurora-1, var(--aurora-1)), var(--aurora-1); }
-  .chapter-bg-2 { background-image: var(--img-aurora-2, var(--aurora-2)), var(--aurora-2); }
+  :root {
+    --bg: #fff;
+    --bg-alt: #f5f5f7;
+    --text: #1d1d1f;
+    --text-2: #6e6e73;
+    --line: #d2d2d7;
+    --blue: #0071e3;
+    --link: #0066cc;
+    --card: #fff;
+    --hero-bg: #000;
+    --hero-text: #f5f5f7;
+    --hero-text-2: #a1a1a6;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #000;
+      --bg-alt: #161617;
+      --text: #f5f5f7;
+      --text-2: #a1a1a6;
+      --line: rgba(255, 255, 255, .16);
+      --link: #2997ff;
+      --card: #1d1d1f;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; -webkit-text-size-adjust: 100%; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text",
+      "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", Roboto,
+      "Helvetica Neue", Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    font-size: 17px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--link); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---------- 顶部栏：粘住，实色底，不用毛玻璃 ---------- */
+  .nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 28px;
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 12px 24px;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  .nav-brand { font-size: 17px; font-weight: 700; color: var(--text); }
+  .nav-brand:hover { text-decoration: none; }
+  .nav-links { display: flex; gap: 24px; margin-left: auto; }
+  .nav-links a { font-size: 14px; color: var(--text-2); }
+  .nav-links a:hover { color: var(--text); text-decoration: none; }
+  .btn {
+    display: inline-block;
+    padding: 12px 24px;
+    border-radius: 980px;
+    background: var(--blue);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
+  }
+  .btn:hover { text-decoration: none; }
+  .btn-small { padding: 8px 16px; font-size: 13px; }
+  .btn-outline {
+    background: transparent;
+    color: var(--hero-text);
+    border: 1px solid rgba(255, 255, 255, .45);
+  }
+
+  main { display: block; }
+  section { padding: 96px 24px; }
+  section.alt { background: var(--bg-alt); }
+  .wrap { max-width: 980px; margin: 0 auto; }
+  .eyebrow {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: .02em;
+    color: var(--blue);
+    margin-bottom: 12px;
+  }
+  h2 {
+    font-size: clamp(32px, 5vw, 48px);
+    font-weight: 700;
+    letter-spacing: -.02em;
+    line-height: 1.15;
+    margin-bottom: 16px;
+  }
+  .lede { font-size: 21px; color: var(--text-2); margin-bottom: 40px; max-width: 640px; }
+  section p { margin-bottom: 12px; max-width: 640px; }
+  section p:last-child { margin-bottom: 0; }
+
+  /* ---------- Hero：纯黑 ---------- */
+  .hero {
+    background: var(--hero-bg);
+    color: var(--hero-text);
+    text-align: center;
+    padding: 120px 24px 96px;
+  }
+  .hero .eyebrow { color: #2997ff; }
+  .hero h1 {
+    font-size: clamp(64px, 12vw, 120px);
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1;
+    margin-bottom: 24px;
+  }
+  .hero-sub { font-size: clamp(19px, 3vw, 24px); color: var(--hero-text-2); margin-bottom: 40px; }
+  .hero-cta { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 24px; }
+  .hero-note { font-size: 14px; color: var(--hero-text-2); }
+
+  /* ---------- 数字 ---------- */
+  .stat { margin-top: 32px; }
+  .stat strong {
+    display: block;
+    font-size: clamp(56px, 9vw, 80px);
+    font-weight: 800;
+    letter-spacing: -.03em;
+    line-height: 1.05;
+  }
+  .stat span { display: block; margin-top: 8px; color: var(--text-2); font-size: 16px; }
+
+  /* ---------- 卡片 ---------- */
+  .cards { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; max-width: 860px; }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--line);
+    border-radius: 18px;
+    padding: 32px;
+  }
+  .card-tag {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--blue);
+    margin-bottom: 12px;
+  }
+  .card h3 { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
+  .card p { color: var(--text-2); }
+
+  /* ---------- FAQ ---------- */
+  .faq-list { border-top: 1px solid var(--line); max-width: 760px; }
+  .faq-list details { border-bottom: 1px solid var(--line); }
+  .faq-list summary {
+    list-style: none;
+    cursor: pointer;
+    padding: 24px 4px;
+    font-size: 18px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .faq-list summary::-webkit-details-marker { display: none; }
+  .faq-list summary::after {
+    content: "+";
+    flex-shrink: 0;
+    font-size: 26px;
+    font-weight: 400;
+    color: var(--text-2);
+    transition: transform .25s ease;
+  }
+  .faq-list details[open] summary::after { transform: rotate(45deg); }
+  .faq-list details p { padding: 0 4px 24px; color: var(--text-2); font-size: 16px; }
+
+  /* ---------- 页脚 ---------- */
+  .footer {
+    border-top: 1px solid var(--line);
+    padding: 48px 24px calc(48px + env(safe-area-inset-bottom));
+    text-align: center;
+    color: var(--text-2);
+    font-size: 14px;
+  }
+  .footer p { margin-bottom: 8px; }
+
+  /* ---------- 入场：只有标题、导语、卡片淡入；带链接的段落和 FAQ 不参与，
+       免得链接在动画里点不到 ---------- */
+  .reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+    .reveal { opacity: 1; transform: none; transition: none; }
+    .faq-list summary::after { transition: none; }
+  }
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+    .cards { grid-template-columns: 1fr; }
+    section { padding: 72px 20px; }
+    .hero { padding: 96px 20px 72px; }
+  }
 </style>
-<noscript><style>
-  .reveal { opacity: 1; transform: none; }
-  /* 无 JS 时翻页台摊开成普通整屏章节，逐页往下读 */
-  .deck { height: auto; }
-  .deck-stage { position: static; height: auto; overflow: visible; }
-  .deck-page { position: relative; height: 100svh; opacity: 1 !important; visibility: visible !important; pointer-events: auto; }
-  .deck-dots { display: none; }
-</style></noscript>
-<script src="https://unpkg.com/lenis@1.1.14/dist/lenis.min.js" defer></script>
-<script src="assets/site.js" defer></script>
 </head>
 <body>
 
-<header class="nav glass">
+<header class="nav">
   <a class="nav-brand" href="#top">CR880x</a>
   <nav class="nav-links">
     <a href="#nss">NSS 加速</a>
@@ -45,89 +223,57 @@
 
 <main id="top">
 
-  <!-- 翻页台：Hero / 01 / 02 是整页翻页。台高 2.2 屏（每页行程只有
-       0.6 屏，手指少滑一点就能翻页），台面粘住不动，三页叠在同一屏
-       里按滚动进度淡入淡出（三页背景各不相同，所以页间交叠淡化）；
-       滚动一停就吸附到最近的整页位置，绝不停在半页。 -->
-  <div class="deck" id="deck" data-lenis-prevent-wheel>
-  <div class="deck-stage">
-
-  <!-- Hero（翻页第 1 页；透明字不缩放） -->
-  <section class="hero deck-page" id="hero" data-progress data-bg="aurora-hero">
-    <div class="hero-bg" aria-hidden="true"></div>
-    <div class="hero-inner">
-      <p class="hero-eyebrow reveal" data-words>OpenWrt · Qualcomm NSS</p>
-      <h1 class="hero-title">CR880x</h1>
-      <p class="hero-sub reveal" data-words>NSS 硬件加速的 OpenWrt，为 M79A / M81 而生。</p>
-      <div class="hero-cta reveal">
-        <a class="btn btn-primary" data-board="M79A" href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss/releases">M79A 最新</a>
-        <a class="btn btn-secondary" data-board="M81" href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss/releases">M81 最新</a>
+  <!-- Hero -->
+  <section class="hero" id="hero">
+    <div class="wrap">
+      <p class="eyebrow">OpenWrt · Qualcomm NSS</p>
+      <h1>CR880x</h1>
+      <p class="hero-sub">NSS 硬件加速的 OpenWrt，为 M79A / M81 而生。</p>
+      <div class="hero-cta">
+        <a class="btn" data-board="M79A" href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss/releases">M79A 最新</a>
+        <a class="btn btn-outline" data-board="M81" href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss/releases">M81 最新</a>
       </div>
-      <p class="hero-note reveal">基于 kuncy7 openwrt-nss-edma · 内核 6.18 · NSS 固件 12.5</p>
-    </div>
-    <div class="scroll-hint" aria-hidden="true">
-      <span class="scroll-hint-text">向下滚动</span>
-      <span class="scroll-hint-track"><span class="scroll-hint-dot"></span></span>
+      <p class="hero-note">基于 kuncy7 openwrt-nss-edma · 内核 6.18 · NSS 固件 12.5</p>
     </div>
   </section>
 
-  <!-- 01 NSS 加速（翻页第 2 页） -->
-  <section class="chapter deck-page" id="nss" data-progress data-bg="aurora-1">
-    <div class="chapter-bg chapter-bg-1" aria-hidden="true"></div>
-    <div class="chapter-inner">
-      <p class="chapter-num reveal">01</p>
-      <h2 class="reveal" data-words>NSS 加速</h2>
-      <p class="chapter-lede reveal" data-words>把转发交给硬件，CPU 留给真正需要它的事。</p>
-      <div class="glass reveal">
-        <p>Qualcomm NSS 硬件加速接管网络转发，日常上网不再吃满 CPU。</p>
-        <p class="stat"><strong>99 Mbps</strong><span>基线 #35 在 100M 宽带上的实测，CPU 平稳。</span></p>
-      </div>
+  <!-- 01 NSS 加速 -->
+  <section id="nss">
+    <div class="wrap">
+      <p class="eyebrow reveal">01</p>
+      <h2 class="reveal">NSS 加速</h2>
+      <p class="lede reveal">把转发交给硬件，CPU 留给真正需要它的事。</p>
+      <p>Qualcomm NSS 硬件加速接管网络转发，日常上网不再吃满 CPU。</p>
+      <p class="stat reveal"><strong>99 Mbps</strong><span>基线 #35 在 100M 宽带上的实测，CPU 平稳。</span></p>
     </div>
   </section>
 
-  <!-- 02 HE160（翻页第 3 页） -->
-  <section class="chapter deck-page" id="he160" data-progress data-bg="aurora-2">
-    <div class="chapter-bg chapter-bg-2" aria-hidden="true"></div>
-    <div class="chapter-inner">
-      <p class="chapter-num reveal">02</p>
-      <h2 class="reveal" data-words>HE160</h2>
-      <p class="chapter-lede reveal" data-words>5GHz 频段，160MHz 更宽的路。</p>
-      <div class="glass reveal">
-        <p>5GHz 支持 160MHz 频宽，CN、信道自动（实测 ch36）。</p>
-        <p>更宽的信道，给无线留出更多余量。</p>
-      </div>
+  <!-- 02 HE160 -->
+  <section class="alt" id="he160">
+    <div class="wrap">
+      <p class="eyebrow reveal">02</p>
+      <h2 class="reveal">HE160</h2>
+      <p class="lede reveal">5GHz 频段，160MHz 更宽的路。</p>
+      <p>5GHz 支持 160MHz 频宽，CN、信道自动（实测 ch36）。</p>
+      <p>更宽的信道，给无线留出更多余量。</p>
     </div>
   </section>
-
-  <nav class="deck-dots" aria-label="翻页导航">
-    <button type="button" class="deck-dot is-active" data-goto="0" aria-label="第 1 页：CR880x"></button>
-    <button type="button" class="deck-dot" data-goto="1" aria-label="第 2 页：NSS 加速"></button>
-    <button type="button" class="deck-dot" data-goto="2" aria-label="第 3 页：HE160"></button>
-  </nav>
-
-  </div><!-- /.deck-stage -->
-  </div><!-- /.deck -->
-
-  <!-- 盖屏段：03 起每节占满一屏、粘住不动，下一节从下面升起来
-       盖住上一节（圆角顶、亮顶边、重投影，像一张独立的纸盖上来）；
-       离开翻页台同样吸附，停下总落在整页边界 -->
-  <div class="smooth" id="smooth">
 
   <!-- 03 ath11k 补丁 -->
-  <section class="chapter cover" id="patches" data-progress>
-    <div class="chapter-inner">
-      <p class="chapter-num reveal">03</p>
-      <h2 class="reveal" data-words>两个 ath11k 补丁</h2>
-      <p class="chapter-lede reveal" data-words>构建 #45 里的两处无线驱动改进。</p>
+  <section id="patches">
+    <div class="wrap">
+      <p class="eyebrow reveal">03</p>
+      <h2 class="reveal">两个 ath11k 补丁</h2>
+      <p class="lede reveal">构建 #45 里的两处无线驱动改进。</p>
       <div class="cards">
-        <article class="glass reveal">
+        <article class="card reveal">
           <p class="card-tag">补丁 A · 稳定性</p>
-          <h3 data-words>RX 分片 double-free 修复</h3>
+          <h3>RX 分片 double-free 修复</h3>
           <p>修复接收分片处理中的 double-free，防止极小概率的崩溃。</p>
         </article>
-        <article class="glass reveal">
+        <article class="card reveal">
           <p class="card-tag">补丁 B · 2.4G</p>
-          <h3 data-words>2GHz 报 7935 字节 A-MSDU</h3>
+          <h3>2GHz 报 7935 字节 A-MSDU</h3>
           <p>2.4G 聚合上限提升，吞吐可能变好。</p>
         </article>
       </div>
@@ -135,51 +281,49 @@
   </section>
 
   <!-- 04 构建与 Release -->
-  <section class="chapter cover" id="build" data-progress>
-    <div class="chapter-inner">
-      <p class="chapter-num reveal">04</p>
-      <h2 class="reveal" data-words>构建与 Release</h2>
-      <p class="chapter-lede reveal" data-words>每次构建都在 GitHub Actions 里完成，公开可查。</p>
-      <div class="glass reveal">
-        <p>GitHub Actions 编译，构建 #45（run 43770324540）。</p>
-        <p>Release 见 <a href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss">github.com/jerome3389-a11y/cr880x-ipq5000-nss</a>。</p>
-        <p>开箱即带：BBR · Adblock · Argon 主题 · WiFi 预设。</p>
-      </div>
+  <section class="alt" id="build">
+    <div class="wrap">
+      <p class="eyebrow reveal">04</p>
+      <h2 class="reveal">构建与 Release</h2>
+      <p class="lede reveal">每次构建都在 GitHub Actions 里完成，公开可查。</p>
+      <p>GitHub Actions 编译，构建 #45（run 43770324540）。</p>
+      <p>Release 见 <a href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss">github.com/jerome3389-a11y/cr880x-ipq5000-nss</a>。</p>
+      <p>开箱即带：BBR · Adblock · Argon 主题 · WiFi 预设。</p>
     </div>
   </section>
 
   <!-- 05 安装 -->
-  <section class="chapter cover" id="install" data-progress>
-    <div class="chapter-inner">
-      <p class="chapter-num reveal">05</p>
-      <h2 class="reveal" data-words>安装</h2>
-      <p class="chapter-lede reveal" data-words>经 trigsoft web U-Boot 刷入 factory.ubi。</p>
+  <section id="install">
+    <div class="wrap">
+      <p class="eyebrow reveal">05</p>
+      <h2 class="reveal">安装</h2>
+      <p class="lede reveal">经 trigsoft web U-Boot 刷入 factory.ubi。</p>
     </div>
   </section>
 
   <!-- FAQ -->
-  <section class="faq cover" id="faq" data-progress>
-    <div class="faq-inner">
-      <p class="chapter-num reveal">FAQ</p>
-      <h2 class="reveal" data-words>常见问题</h2>
+  <section class="alt" id="faq">
+    <div class="wrap">
+      <p class="eyebrow">FAQ</p>
+      <h2>常见问题</h2>
       <div class="faq-list">
-        <details class="glass reveal">
+        <details>
           <summary>适用哪些板本？</summary>
           <p>适用于 M79A / M81。</p>
         </details>
-        <details class="glass reveal">
+        <details>
           <summary>NSS 是什么？</summary>
           <p>NSS 是 Qualcomm 的网络加速硬件。开启后，网络转发由 NSS 硬件处理，减轻 CPU 负担。</p>
         </details>
-        <details class="glass reveal">
+        <details>
           <summary>构建 #45 现在是什么状态？</summary>
           <p>已构建，未刷机验证。</p>
         </details>
-        <details class="glass reveal">
+        <details>
           <summary>和原厂固件有什么区别？</summary>
           <p>这是基于 OpenWrt 的第三方固件，带 NSS 硬件加速和更新的无线支持；原厂固件是小米提供的官方系统。</p>
         </details>
-        <details class="glass reveal">
+        <details>
           <summary>在哪里下载？</summary>
           <p>按板本下载最新版：<a data-board="M79A" href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss/releases">M79A 最新</a>、<a data-board="M81" href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss/releases">M81 最新</a>；也可以在 <a href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss/releases">GitHub Release 列表</a>里自己选。</p>
         </details>
@@ -187,14 +331,81 @@
     </div>
   </section>
 
-  </div><!-- /.smooth -->
-
 </main>
 
 <footer class="footer">
   <p><a href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss">github.com/jerome3389-a11y/cr880x-ipq5000-nss</a></p>
   <p>非官方项目，与小米、OpenWrt 无隶属关系。</p>
 </footer>
+
+<script>
+/* 只有两件事：入场淡入（IntersectionObserver，不接管滚动），
+   和按板本跳最新 release（查公开 API，5 秒超时回列表页）。 */
+(function () {
+  'use strict';
+
+  /* 入场淡入：只加到 .reveal 上；带链接的段落和 FAQ 本来就没 .reveal。 */
+  try {
+    var revealEls = document.querySelectorAll('.reveal');
+    if ('IntersectionObserver' in window && revealEls.length) {
+      var io = new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('in');
+            io.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.15 });
+      revealEls.forEach(function (el) { io.observe(el); });
+    } else {
+      revealEls.forEach(function (el) { el.classList.add('in'); });
+    }
+  } catch (err) {
+    document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
+  }
+
+  /* 按板本跳最新 release：GitHub 没有按板本的 latest 链接，所以点
+     按钮时查公开 Release 列表，找 tag 以“板本-”开头的最新一个；
+     查不到、失败或 5 秒超时，就走链接本身的列表页；没 JS 时也一样。 */
+  var RELEASES_API = 'https://api.github.com/repos/jerome3389-a11y/cr880x-ipq5000-nss/releases?per_page=100';
+  function latestFor(board) {
+    return new Promise(function (resolve) {
+      var done = false;
+      var timer = setTimeout(function () { finish(null); }, 5000);
+      function finish(url) {
+        if (done) return;
+        done = true;
+        clearTimeout(timer);
+        resolve(url);
+      }
+      fetch(RELEASES_API).then(function (res) {
+        if (!res.ok) throw new Error('releases ' + res.status);
+        return res.json();
+      }).then(function (list) {
+        for (var i = 0; i < list.length; i++) {
+          var tag = list[i] && list[i].tag_name;
+          if (tag && tag.indexOf(board + '-') === 0) {
+            finish(list[i].html_url);
+            return;
+          }
+        }
+        finish(null);
+      }).catch(function () { finish(null); });
+    });
+  }
+  document.querySelectorAll('a[data-board]').forEach(function (a) {
+    a.addEventListener('click', function (e) {
+      var board = a.getAttribute('data-board');
+      var fallback = a.getAttribute('href');
+      if (!board || !fallback) return;
+      e.preventDefault();
+      latestFor(board).then(function (url) {
+        window.location.href = url || fallback;
+      });
+    });
+  });
+})();
+</script>
 
 </body>
 </html>
