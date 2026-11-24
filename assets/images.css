@@ -1,0 +1,16 @@
+/* images.css — image URL variables only (no layout styles).
+ * Implementer A's CSS consumes these and provides a gradient
+ * fallback wherever a background image is used.
+ * All three URLs verified with `curl -sI` on 2026-11-16:
+ * HTTP 200, Content-Type: image/jpeg. */
+
+:root {
+  /* Hero background: aurora borealis over a snowy landscape. */
+  --img-hero: url("https://images.unsplash.com/photo-1531366936337-7c912a4589a7?w=1920&q=80&auto=format&fit=crop");
+
+  /* Section background 1: mountain peaks under a starry night sky. */
+  --img-aurora-1: url("https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=80&auto=format&fit=crop");
+
+  /* Section background 2: foggy hills at dawn. */
+  --img-aurora-2: url("https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=1920&q=80&auto=format&fit=crop");
+}
