@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>CR880x — NSS 硬件加速的 OpenWrt</title>
-<meta name="description" content="CR880x：NSS 硬件加速的 OpenWrt，为 M79A / M81 而生。">
+<meta name="description" content="CR880x：NSS 硬件加速的 OpenWrt，跑在 M79A / M81 上。">
 <style>
   :root {
     --bg: #fff;
@@ -154,6 +154,17 @@
   .card h3 { font-size: 24px; font-weight: 700; margin-bottom: 12px; }
   .card p { color: var(--text-2); }
 
+  /* ---------- 历史：日期 + 事实，一行一条 ---------- */
+  .history { list-style: none; border-top: 1px solid var(--line); margin-top: 40px; max-width: 760px; }
+  .history li {
+    display: flex;
+    gap: 24px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .history .date { flex-shrink: 0; width: 96px; color: var(--text-2); font-size: 15px; padding-top: 2px; }
+  .history li p, .history li span:last-child { max-width: none; }
+
   /* ---------- FAQ ---------- */
   .faq-list { border-top: 1px solid var(--line); max-width: 760px; }
   .faq-list details { border-bottom: 1px solid var(--line); }
@@ -204,6 +215,8 @@
     .cards { grid-template-columns: 1fr; }
     section { padding: 72px 20px; }
     .hero { padding: 96px 20px 72px; }
+    .history li { flex-direction: column; gap: 4px; }
+    .history .date { width: auto; padding-top: 0; }
   }
 </style>
 </head>
@@ -216,6 +229,7 @@
     <a href="#he160">HE160</a>
     <a href="#patches">ath11k 补丁</a>
     <a href="#build">构建</a>
+    <a href="#history">由来与历史</a>
     <a href="#faq">常见问题</a>
   </nav>
   <a class="btn btn-small" href="#hero">下载固件</a>
@@ -228,7 +242,7 @@
     <div class="wrap">
       <p class="eyebrow">OpenWrt · Qualcomm NSS</p>
       <h1>CR880x</h1>
-      <p class="hero-sub">NSS 硬件加速的 OpenWrt，为 M79A / M81 而生。</p>
+      <p class="hero-sub">NSS 硬件加速的 OpenWrt，跑在 M79A / M81 上。</p>
       <div class="hero-cta">
         <a class="btn" data-board="M79A" href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss/releases">M79A 最新</a>
         <a class="btn btn-outline" data-board="M81" href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss/releases">M81 最新</a>
@@ -242,8 +256,8 @@
     <div class="wrap">
       <p class="eyebrow reveal">01</p>
       <h2 class="reveal">NSS 加速</h2>
-      <p class="lede reveal">把转发交给硬件，CPU 留给真正需要它的事。</p>
-      <p>Qualcomm NSS 硬件加速接管网络转发，日常上网不再吃满 CPU。</p>
+      <p class="lede reveal">转发由 NSS 硬件处理。</p>
+      <p>NSS 是 Qualcomm 的网络加速硬件，开启后转发在硬件里完成，CPU 不参与转发。</p>
       <p class="stat reveal"><strong>99 Mbps</strong><span>基线 #35 在 100M 宽带上的实测，CPU 平稳。</span></p>
     </div>
   </section>
@@ -253,9 +267,9 @@
     <div class="wrap">
       <p class="eyebrow reveal">02</p>
       <h2 class="reveal">HE160</h2>
-      <p class="lede reveal">5GHz 频段，160MHz 更宽的路。</p>
+      <p class="lede reveal">5GHz，160MHz，信道 36。</p>
       <p>5GHz 支持 160MHz 频宽，CN、信道自动（实测 ch36）。</p>
-      <p>更宽的信道，给无线留出更多余量。</p>
+      <p>在中国，160MHz 只能走信道 36（没有 100–144）。</p>
     </div>
   </section>
 
@@ -277,6 +291,7 @@
           <p>2.4G 聚合上限提升，吞吐可能变好。</p>
         </article>
       </div>
+      <p style="margin-top: 32px;">两个补丁已在构建 #45 的二进制里验证通过，尚未刷机。</p>
     </div>
   </section>
 
@@ -298,6 +313,25 @@
       <p class="eyebrow reveal">05</p>
       <h2 class="reveal">安装</h2>
       <p class="lede reveal">经 trigsoft web U-Boot 刷入 factory.ubi。</p>
+      <p>只刷 factory.ubi，不走 sysupgrade。</p>
+    </div>
+  </section>
+
+  <!-- 06 由来与历史 -->
+  <section class="alt" id="history">
+    <div class="wrap">
+      <p class="eyebrow reveal">06</p>
+      <h2 class="reveal">由来与历史</h2>
+      <p class="lede reveal">这个固件从哪来，一路怎么走过来的。</p>
+      <p>固件给小米 Redmi AX3000 / CR8808 做，板本 M79A / M81。底包是 kuncy7 的 openwrt-nss-edma（内核 6.18，NSS 固件 12.5），每次构建都在 GitHub Actions 里完成，Release 公开可查。</p>
+      <ul class="history">
+        <li><span class="date">11 月 2 日</span><span><strong>构建 #1</strong> —— 第一个构建成功。</span></li>
+        <li><span class="date">11 月 4 日</span><span><strong>构建 #8</strong> —— #6、#7 两次刷入无法启动（分区表解析问题），#8 修好，第一次启动自己的固件（当时还没有 WiFi）。</span></li>
+        <li><span class="date">11 月 4 日</span><span><strong>构建 #14</strong> —— 修正 caldata 分区名大小写（“0:art”→“0:ART”），WiFi 第一次通了；NSS 同日验证通过。</span></li>
+        <li><span class="date">11 月 11 日</span><span><strong>构建 #35</strong> —— NSS 加速在设备上证实：100M 宽带跑到 99 Mbps，CPU 平稳。</span></li>
+        <li><span class="date">11 月 11 日</span><span><strong>构建 #39</strong> —— 5GHz 160MHz 在设备上证实，信道 36。</span></li>
+        <li><span class="date">11 月 15 日</span><span><strong>构建 #45</strong> —— 两个 ath11k 补丁进构建，二进制验证通过，尚未刷机验证。</span></li>
+      </ul>
     </div>
   </section>
 
