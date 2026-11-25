@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>CR880x — NSS 硬件加速的 OpenWrt</title>
-<meta name="description" content="CR880x：NSS 硬件加速的 OpenWrt，跑在 M79A / M81 上。">
+<title>CR880X — NSS 硬件加速的 OpenWrt</title>
+<meta name="description" content="CR880X：NSS 硬件加速的 OpenWrt，跑在 M79A / M81 上。">
 <style>
   :root {
     --bg: #fff;
@@ -165,6 +165,22 @@
   .history .date { flex-shrink: 0; width: 96px; color: var(--text-2); font-size: 15px; padding-top: 2px; }
   .history li p, .history li span:last-child { max-width: none; }
 
+  /* ---------- 硬件参数：术语 + 值，一行一条 ---------- */
+  .specs { list-style: none; border-top: 1px solid var(--line); margin-top: 40px; max-width: 760px; }
+  .specs li {
+    display: flex;
+    gap: 24px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .specs .k { flex-shrink: 0; width: 160px; color: var(--text-2); font-size: 15px; padding-top: 2px; }
+  .specs li span:last-child { max-width: none; }
+
+  /* ---------- 功能列表：要点 + 说明，一行一条 ---------- */
+  .feat { list-style: none; border-top: 1px solid var(--line); margin-top: 40px; max-width: 760px; }
+  .feat li { padding: 16px 0; border-bottom: 1px solid var(--line); }
+  .feat li strong { font-weight: 700; }
+
   /* ---------- FAQ ---------- */
   .faq-list { border-top: 1px solid var(--line); max-width: 760px; }
   .faq-list details { border-bottom: 1px solid var(--line); }
@@ -217,13 +233,15 @@
     .hero { padding: 96px 20px 72px; }
     .history li { flex-direction: column; gap: 4px; }
     .history .date { width: auto; padding-top: 0; }
+    .specs li { flex-direction: column; gap: 4px; }
+    .specs .k { width: auto; padding-top: 0; }
   }
 </style>
 </head>
 <body>
 
 <header class="nav">
-  <a class="nav-brand" href="#top">CR880x</a>
+  <a class="nav-brand" href="#top">CR880X</a>
   <nav class="nav-links">
     <a href="#nss">NSS 加速</a>
     <a href="#he160">HE160</a>
@@ -241,7 +259,7 @@
   <section class="hero" id="hero">
     <div class="wrap">
       <p class="eyebrow">OpenWrt · Qualcomm NSS</p>
-      <h1>CR880x</h1>
+      <h1>CR880X</h1>
       <p class="hero-sub">NSS 硬件加速的 OpenWrt，跑在 M79A / M81 上。</p>
       <div class="hero-cta">
         <a class="btn" data-board="M79A" href="https://github.com/jerome3389-a11y/cr880x-ipq5000-nss/releases">M79A 最新</a>
@@ -331,6 +349,80 @@
         <li><span class="date">11 月 11 日</span><span><strong>构建 #35</strong> —— NSS 加速在设备上证实：100M 宽带跑到 99 Mbps，CPU 平稳。</span></li>
         <li><span class="date">11 月 11 日</span><span><strong>构建 #39</strong> —— 5GHz 160MHz 在设备上证实，信道 36。</span></li>
         <li><span class="date">11 月 15 日</span><span><strong>构建 #45</strong> —— 两个 ath11k 补丁进构建，二进制验证通过，尚未刷机验证。</span></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 07 硬件参数 -->
+  <section id="specs">
+    <div class="wrap">
+      <p class="eyebrow reveal">07</p>
+      <h2 class="reveal">硬件参数</h2>
+      <p class="lede reveal">板本 M79A / M81 的硬件。</p>
+      <ul class="specs">
+        <li><span class="k">板本</span><span>M79A / M81（小米 Redmi AX3000 / CR8808；运营商后缀 8806 / 8808 / 8809 是同一硬件）</span></li>
+        <li><span class="k">SoC</span><span>Qualcomm IPQ5018，双核 ARM Cortex-A53</span></li>
+        <li><span class="k">内存</span><span>256 MiB</span></li>
+        <li><span class="k">闪存</span><span>128 MiB SPI NAND（ESMT F50D1G41LB）</span></li>
+        <li><span class="k">交换机</span><span>QCA8337，1 个 WAN 口 + 3 个 LAN 口，千兆</span></li>
+        <li><span class="k">无线</span><span>2.4 GHz 集成在 SoC 内；5 GHz QCN6122</span></li>
+        <li><span class="k">前端</span><span>2.4 GHz：M79A MXD7223，M81 CTR66266；5 GHz：RTC66568</span></li>
+        <li><span class="k">发射功率（CN）</span><span>2.4 GHz 与 5 GHz 均限 20 dBm</span></li>
+      </ul>
+      <p style="margin-top: 32px;">B版（IPQ5018 + YT9215S）与 M79A / M81 不通用，不适用本固件。</p>
+    </div>
+  </section>
+
+  <!-- 08 软件特性 -->
+  <section class="alt" id="software">
+    <div class="wrap">
+      <p class="eyebrow reveal">08</p>
+      <h2 class="reveal">软件特性</h2>
+      <p class="lede reveal">系统里有什么，开箱什么样。</p>
+      <ul class="feat">
+        <li><strong>系统</strong> — OpenWrt，内核 6.18.55；NSS 固件 12.5。</li>
+        <li><strong>界面</strong> — LuCI，Argon 主题（默认）。</li>
+        <li><strong>转发</strong> — NSS 硬件加速（ECM）；内核 flow offloading 关闭。</li>
+        <li><strong>拥塞控制</strong> — BBR。</li>
+        <li><strong>广告过滤</strong> — Adblock，已启用；规则源预设 anti_ad 与 AdGuard；DNS 用 dnsmasq-full（nftset 支持）。</li>
+        <li><strong>内存</strong> — zram 压缩交换，LZ4。</li>
+        <li><strong>队列</strong> — SQM（NSS 硬件队列），默认关闭。</li>
+        <li><strong>UPnP</strong> — 已安装。</li>
+        <li><strong>诊断</strong> — tcpdump-mini。</li>
+        <li><strong>组播</strong> — WiFi multicast_to_unicast_all；交换机桥 IGMP snooping 关闭。</li>
+        <li><strong>IPv6</strong> — 支持 PD 前缀下发。</li>
+        <li><strong>开箱预设</strong> — WiFi SSID OpenWrt / OpenWrt_5G，默认密码 12345678（首次启动后请修改）；5 GHz 信道 36、160 MHz；2.4 GHz 自动信道、20 MHz；国家码 CN；802.11k/v 开，802.11r 关；LAN 192.168.1.1。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 09 驱动特性 -->
+  <section id="drivers">
+    <div class="wrap">
+      <p class="eyebrow reveal">09</p>
+      <h2 class="reveal">驱动特性</h2>
+      <p class="lede reveal">无线与网络驱动的组成。</p>
+      <ul class="feat">
+        <li><strong>无线驱动</strong> — ath11k（mac80211，backports 7.2）；2.4 GHz 集成于 SoC，5 GHz QCN6122；校准数据从 ART 分区读取（0:ART）。</li>
+        <li><strong>NSS</strong> — qca-nss-drv + ECM；ath11k NSS 支持已开；nss-tools-dwmac；NSS 内存配置 LOW；NSS 固件 12.5。</li>
+        <li><strong>交换机</strong> — qca8k DSA；单 conduit eth1（GMAC1 / 交换机 0 号口）；交换机 5 号口关闭（洪泛）；DSA NSS 内部 VLAN：WAN VID 3076，LAN VID 3088；kmod-qca-nss-drv-vlan-mgr 保留。</li>
+        <li><strong>ath11k 补丁</strong> — A 修复接收分片 double-free；B 让 2 GHz 报 7935 字节 A-MSDU；两个补丁已在构建 #45 的二进制里验证。</li>
+        <li><strong>漫游</strong> — 802.11k/v 开（wpad-mbedtls 完整版）；802.11r 关。</li>
+        <li><strong>频谱</strong> — CN 5 GHz 160 MHz 补丁（5150–5350 @ 160）；中国没有 100–144 信道，160 MHz 只能走信道 36。</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 10 状态 -->
+  <section class="alt" id="status">
+    <div class="wrap">
+      <p class="eyebrow reveal">10</p>
+      <h2 class="reveal">状态</h2>
+      <p class="lede reveal">当前状态，只写已验证的事。</p>
+      <ul class="feat">
+        <li><strong>构建 #45</strong> — 已构建，尚未刷机验证。</li>
+        <li><strong>M81</strong> — 构建已出，尚未在硬件上验证。</li>
+        <li><strong>B版</strong> — 暂缓，不在当前计划内。</li>
       </ul>
     </div>
   </section>
