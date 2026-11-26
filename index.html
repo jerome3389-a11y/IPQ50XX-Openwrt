@@ -494,9 +494,12 @@
     document.querySelectorAll('.reveal').forEach(function (el) { el.classList.add('in'); });
   }
 
-  /* 按板本跳最新 release：GitHub 没有按板本的 latest 链接，所以点
-     按钮时查公开 Release 列表，找 tag 以“板本-”开头的最新一个；
-     查不到、失败或 5 秒超时，就走链接本身的列表页；没 JS 时也一样。 */
+  /* 跳最新稳定版 release：每版只有一个 release（全部型号的固件
+     都在里面，说明写清型号对应用哪个文件），tag 不带板本前缀；
+     所以点按钮时查公开 Release 列表，找第一个非 prerelease 的
+     统一 release；没找到统一 release 时，退到旧的按板本 release
+     （tag 以“板本-”开头），过渡用；查不到、失败或 5 秒超时，就
+     走链接本身的列表页；没 JS 时也一样。 */
   var RELEASES_API = 'https://api.github.com/repos/jerome3389-a11y/cr880x-ipq5000-nss/releases?per_page=100';
   function latestFor(board) {
     return new Promise(function (resolve) {
@@ -512,14 +515,18 @@
         if (!res.ok) throw new Error('releases ' + res.status);
         return res.json();
       }).then(function (list) {
+        var perModel = null;
         for (var i = 0; i < list.length; i++) {
-          var tag = list[i] && list[i].tag_name;
-          if (tag && tag.indexOf(board + '-') === 0) {
-            finish(list[i].html_url);
+          var r = list[i];
+          if (!r || r.prerelease !== false) continue;
+          var tag = r.tag_name || '';
+          if (tag.indexOf('M79A-') !== 0 && tag.indexOf('M81-') !== 0) {
+            finish(r.html_url);
             return;
           }
+          if (!perModel && tag.indexOf(board + '-') === 0) perModel = r.html_url;
         }
-        finish(null);
+        finish(perModel);
       }).catch(function () { finish(null); });
     });
   }
